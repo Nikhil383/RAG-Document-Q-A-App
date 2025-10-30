@@ -7,7 +7,7 @@ from pathlib import Path
 from sentence_transformers import SentenceTransformer
 from transformers import pipeline
 
-# ✅ Version-safe import for LangChain's text splitter
+# ✅ Version-safe import for LangChain text splitter
 try:
     from langchain.text_splitter import RecursiveCharacterTextSplitter
 except ModuleNotFoundError:
@@ -22,8 +22,8 @@ warnings.filterwarnings("ignore")
 class RAGPipeline:
     def __init__(self):
         self.chunks = []
-        self.model = SentenceTransformer("t5-base")
-        self.generator = pipeline("text2text-generation", model="google/flan-t5-small")
+        self.model = SentenceTransformer("all-MiniLM-L6-v2")
+        self.generator = pipeline("text2text-generation", model="google/flan-t5-base")
         self.index = None
         print("[INFO] RAG Engine initialized (waiting for document upload)")
 
@@ -74,7 +74,7 @@ class RAGPipeline:
         Generates an answer using the currently loaded document.
         """
         if not self.index:
-            return "No document has been uploaded yet. Please upload one first."
+            return "⚠️ No document uploaded yet. Please upload a file first."
         if not query.strip():
             return "Please enter a valid question."
 

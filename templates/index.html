@@ -44,7 +44,6 @@
     const queryForm = document.getElementById("queryForm");
     const responseBox = document.getElementById("response");
 
-    // Handle Upload
     uploadForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       if (!fileInput.files.length) return;
@@ -68,7 +67,6 @@
       }
     });
 
-    // Remove uploaded file
     removeBtn.addEventListener("click", () => {
       fileInput.value = "";
       fileName.textContent = "";
@@ -78,7 +76,6 @@
       removeBtn.disabled = true;
     });
 
-    // Ask question
     queryForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const formData = new FormData(e.target);
