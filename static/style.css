@@ -1,0 +1,164 @@
+/* ====== General Layout ====== */
+body {
+  margin: 0;
+  font-family: "Poppins", "Segoe UI", sans-serif;
+  background: linear-gradient(135deg, #89f7fe, #66a6ff);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.5s ease;
+}
+
+.app-container {
+  width: 100%;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.card {
+  background: white;
+  padding: 35px 40px;
+  border-radius: 20px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+  text-align: center;
+  width: 95%;
+  max-width: 520px;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 1.8rem;
+  color: #1a1a1a;
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  color: #555;
+  margin-bottom: 25px;
+}
+
+/* ====== Upload Section ====== */
+.upload-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+input[type="file"] {
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 8px;
+  background: #f9f9f9;
+  font-size: 0.9rem;
+}
+
+button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+/* ====== Buttons ====== */
+.upload-btn {
+  background-color: #007bff;
+}
+.upload-btn:hover {
+  background-color: #0056b3;
+  transform: scale(1.05);
+}
+
+.remove-btn {
+  background-color: #dc3545;
+}
+.remove-btn:hover {
+  background-color: #b21f2d;
+  transform: scale(1.05);
+}
+
+.ask-btn {
+  background-color: #28a745;
+}
+.ask-btn:hover {
+  background-color: #1e7e34;
+  transform: scale(1.05);
+}
+
+/* ====== Other Elements ====== */
+.file-name {
+  font-size: 0.9rem;
+  margin-top: 8px;
+  color: #333;
+  font-weight: 500;
+}
+
+.status-text {
+  font-size: 0.9rem;
+  margin-top: 5px;
+  font-weight: 500;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid #ddd;
+  margin: 25px 0;
+}
+
+input[type="text"] {
+  width: 75%;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 0.9rem;
+}
+
+.response-box {
+  margin-top: 20px;
+  font-size: 1rem;
+  color: #333;
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 15px;
+  text-align: left;
+  word-wrap: break-word;
+}
+
+.loading {
+  font-style: italic;
+  color: #555;
+  animation: blink 1.2s infinite;
+}
+
+/* ====== Animations ====== */
+@keyframes blink {
+  50% { opacity: 0.5; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ====== Responsive Design ====== */
+@media (max-width: 600px) {
+  .card {
+    padding: 25px;
+  }
+
+  input[type="file"],
+  input[type="text"] {
+    width: 100%;
+  }
+
+  .upload-section {
+    flex-direction: column;
+  }
+}
