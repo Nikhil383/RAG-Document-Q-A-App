@@ -51,7 +51,7 @@ rag_app/
 ## ⚙️ Setup Instructions
 
 ### 1️⃣ Clone the Repository
-```bash
+
 git clone https://github.com/<your-username>/rag-document-qa.git
 cd rag-document-qa
 
@@ -67,8 +67,6 @@ pip install -r requirements.txt
 4️⃣ Run the App
 python app.py
 
-
-App will be available at http://127.0.0.1:5000
 
 🧠 How It Works
 
