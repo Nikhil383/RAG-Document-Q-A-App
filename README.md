@@ -95,14 +95,14 @@ Generates context-aware answers using google/flan-t5-base.
 
 You can switch models in backend/rag_engine.py:
 
-# Default (text generation)
+## Default (text generation)
 self.generator = pipeline("text2text-generation", model="google/flan-t5-base")
 
 # Alternative (extractive QA)
-# self.generator = pipeline("question-answering", model="deepset/roberta-base-squad2")
+self.generator = pipeline("question-answering", model="deepset/roberta-base-squad2")
 
 # Advanced (GPU)
-# self.generator = pipeline("text-generation", model="mistralai/Mistral-7B-Instruct-v0.2", device_map="auto")
+ self.generator = pipeline("text-generation", model="mistralai/Mistral-7B-Instruct-v0.2", device_map="auto")
 
 🎨 User Interface Preview
 Upload Document	Ask Questions	Get Answers
