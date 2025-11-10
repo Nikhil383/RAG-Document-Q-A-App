@@ -68,8 +68,8 @@ pip install -r requirements.txt
 4️⃣ Run the App
 python app.py
 
-
-🧠 How It Works
+---
+## How It Works
 
 1️⃣ User Uploads Document
 
