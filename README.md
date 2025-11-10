@@ -91,25 +91,23 @@ Retrieves top relevant text chunks.
 
 Generates context-aware answers using google/flan-t5-base.
 
-🤖 Model Options
+## Model Options
 
 You can switch models in backend/rag_engine.py:
 
-## Default (text generation)
+### Default (text generation)
 self.generator = pipeline("text2text-generation", model="google/flan-t5-base")
 
-# Alternative (extractive QA)
+### Alternative (extractive QA)
 self.generator = pipeline("question-answering", model="deepset/roberta-base-squad2")
 
-# Advanced (GPU)
+### Advanced (GPU)
  self.generator = pipeline("text-generation", model="mistralai/Mistral-7B-Instruct-v0.2", device_map="auto")
 
-🎨 User Interface Preview
+## User Interface Preview
 Upload Document	Ask Questions	Get Answers
 
-
-
-💡 Future Enhancements
+## Future Enhancements
 
  Support for multiple document uploads
 
@@ -122,15 +120,14 @@ Upload Document	Ask Questions	Get Answers
  Deploy to Hugging Face Spaces or Render
 
 
- 🧠 Author
+ ## Author
 
-👤 Your Nikhil Mahesh
-📧 your.nikhilmahesh89@gmail.com
+👤 Nmae Nikhil Mahesh
+📧 nikhilmahesh89@gmail.com
 
 🌐 GitHub
  | LinkedIn
 
-
- 🪪 License
+License
 
 This project is licensed under the MIT License — free to use, modify, and distribute.
