@@ -58,7 +58,8 @@ cd rag-document-qa
 2️⃣ Create Virtual Environment
 python -m venv venv
 venv\Scripts\activate   # Windows
-# OR
+
+ or
 source venv/bin/activate   # macOS/Linux
 
 3️⃣ Install Requirements
@@ -106,24 +107,6 @@ self.generator = pipeline("text2text-generation", model="google/flan-t5-base")
 🎨 User Interface Preview
 Upload Document	Ask Questions	Get Answers
 
-	
-	
-
-(Add screenshots in a screenshots/ folder after running the app.)
-
-📦 requirements.txt
-flask
-werkzeug
-transformers
-sentence-transformers
-faiss-cpu
-langchain
-langchain-core
-langchain-text-splitters
-PyPDF2
-python-docx
-torch
-numpy
 
 
 💡 Future Enhancements
@@ -141,8 +124,8 @@ numpy
 
  🧠 Author
 
-👤 Your Name
-📧 your.email@example.com
+👤 Your Nikhil Mahesh
+📧 your.nikhilmahesh89@gmail.com
 
 🌐 GitHub
  | LinkedIn
