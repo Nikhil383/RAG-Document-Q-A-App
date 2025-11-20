@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ask Your Uploaded Document</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="app-container">
+    <div class="card">
+      <h1>📘 Ask Your Uploaded Document</h1>
+      <p class="subtitle">Upload a <strong>PDF</strong>, <strong>DOCX</strong>, or <strong>TXT</strong> file and ask anything about its content!</p>
+
+      <!-- Upload Section -->
+      <form id="uploadForm" enctype="multipart/form-data">
+        <div class="upload-section">
+          <input type="file" id="fileInput" name="file" accept=".pdf,.docx,.txt" required>
+          <button type="submit" class="upload-btn">Upload</button>
+          <button type="button" id="removeBtn" class="remove-btn" disabled>Remove</button>
+        </div>
+        <p id="fileName" class="file-name"></p>
+        <p id="uploadStatus" class="status-text"></p>
+      </form>
+
+      <hr class="divider">
+
+      <!-- Question Section -->
+      <form id="queryForm">
+        <input type="text" id="queryInput" name="query" placeholder="Ask something about your document..." required>
+        <button type="submit" class="ask-btn">Ask</button>
+      </form>
+
+      <div id="response" class="response-box"></div>
+    </div>
+  </div>
+
+  <script>
+    const uploadForm = document.getElementById("uploadForm");
+    const fileInput = document.getElementById("fileInput");
+    const uploadStatus = document.getElementById("uploadStatus");
+    const fileName = document.getElementById("fileName");
+    const removeBtn = document.getElementById("removeBtn");
+    const queryForm = document.getElementById("queryForm");
+    const responseBox = document.getElementById("response");
+
+    uploadForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!fileInput.files.length) return;
+
+      uploadStatus.textContent = "📂 Uploading and processing your document...";
+      uploadStatus.style.color = "#444";
+      responseBox.innerHTML = "";
+
+      const formData = new FormData(uploadForm);
+      const res = await fetch("/upload", { method: "POST", body: formData });
+      const data = await res.json();
+
+      if (data.message) {
+        uploadStatus.textContent = "✅ " + data.message;
+        uploadStatus.style.color = "green";
+        fileName.textContent = "📄 File: " + fileInput.files[0].name;
+        removeBtn.disabled = false;
+      } else {
+        uploadStatus.textContent = "❌ " + data.error;
+        uploadStatus.style.color = "red";
+      }
+    });
+
+    removeBtn.addEventListener("click", () => {
+      fileInput.value = "";
+      fileName.textContent = "";
+      uploadStatus.textContent = "🗑️ File removed.";
+      uploadStatus.style.color = "orange";
+      responseBox.innerHTML = "";
+      removeBtn.disabled = true;
+    });
+
+    queryForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      responseBox.innerHTML = "<p class='loading'>🤔 Thinking...</p>";
+
+      const res = await fetch("/ask", { method: "POST", body: formData });
+      const data = await res.json();
+
+      responseBox.innerHTML = `<p><strong>Answer:</strong> ${data.answer}</p>`;
+      document.getElementById("queryInput").value = "";
+    });
+  </script>
+</body>
+</html>

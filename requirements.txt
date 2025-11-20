@@ -1,0 +1,12 @@
+flask
+werkzeug
+transformers
+sentence-transformers
+faiss-cpu
+langchain
+langchain-core
+langchain-text-splitters
+PyPDF2
+python-docx
+torch
+numpy
