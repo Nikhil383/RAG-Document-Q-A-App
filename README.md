@@ -51,14 +51,15 @@ rag_app/
 ## ⚙️ Setup Instructions
 
 ### 1️⃣ Clone the Repository
-```bash
+
 git clone https://github.com/<your-username>/rag-document-qa.git
 cd rag-document-qa
 
 2️⃣ Create Virtual Environment
 python -m venv venv
 venv\Scripts\activate   # Windows
-# OR
+
+ or
 source venv/bin/activate   # macOS/Linux
 
 3️⃣ Install Requirements
@@ -67,10 +68,8 @@ pip install -r requirements.txt
 4️⃣ Run the App
 python app.py
 
-
-App will be available at http://127.0.0.1:5000
-
-🧠 How It Works
+---
+## How It Works
 
 1️⃣ User Uploads Document
 
@@ -92,43 +91,23 @@ Retrieves top relevant text chunks.
 
 Generates context-aware answers using google/flan-t5-base.
 
-🤖 Model Options
+## Model Options
 
 You can switch models in backend/rag_engine.py:
 
-# Default (text generation)
+### Default (text generation)
 self.generator = pipeline("text2text-generation", model="google/flan-t5-base")
 
-# Alternative (extractive QA)
-# self.generator = pipeline("question-answering", model="deepset/roberta-base-squad2")
+### Alternative (extractive QA)
+self.generator = pipeline("question-answering", model="deepset/roberta-base-squad2")
 
-# Advanced (GPU)
-# self.generator = pipeline("text-generation", model="mistralai/Mistral-7B-Instruct-v0.2", device_map="auto")
+### Advanced (GPU)
+ self.generator = pipeline("text-generation", model="mistralai/Mistral-7B-Instruct-v0.2", device_map="auto")
 
-🎨 User Interface Preview
+## User Interface Preview
 Upload Document	Ask Questions	Get Answers
 
-	
-	
-
-(Add screenshots in a screenshots/ folder after running the app.)
-
-📦 requirements.txt
-flask
-werkzeug
-transformers
-sentence-transformers
-faiss-cpu
-langchain
-langchain-core
-langchain-text-splitters
-PyPDF2
-python-docx
-torch
-numpy
-
-
-💡 Future Enhancements
+## Future Enhancements
 
  Support for multiple document uploads
 
@@ -141,15 +120,14 @@ numpy
  Deploy to Hugging Face Spaces or Render
 
 
- 🧠 Author
+ ## Author
 
-👤 Your Name
-📧 your.email@example.com
+👤 Nmae Nikhil Mahesh
+📧 nikhilmahesh89@gmail.com
 
 🌐 GitHub
  | LinkedIn
 
-
- 🪪 License
+License
 
 This project is licensed under the MIT License — free to use, modify, and distribute.
