@@ -130,5 +130,5 @@ python app.py
 
 ---
 
-## 🪪 License
+## License
 This project is licensed under the MIT License — free to use, modify, and distribute.
