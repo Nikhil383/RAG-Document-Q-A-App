@@ -2,3 +2,4 @@ google-generativeai
 faiss-cpu
 pypdf
 python-dotenv
+flask
