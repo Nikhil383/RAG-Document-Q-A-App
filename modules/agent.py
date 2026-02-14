@@ -1,4 +1,7 @@
 import google.generativeai as genai
+import time
+import os
+from google.api_core import exceptions
 from modules.retriever import Retriever
 
 class Agent:
@@ -7,7 +10,7 @@ class Agent:
         # Create the tool from the retriever method
         self.tools = [self.retriever_tool]
         self.model = genai.GenerativeModel(
-            model_name="gemini-3-flash-preview",
+            model_name=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"), # Updated default to stable version
             tools=self.tools,
             generation_config=genai.types.GenerationConfig(
                 max_output_tokens=500,
@@ -21,5 +24,19 @@ class Agent:
         return self.retriever.query(query)
 
     def ask(self, question: str):
-        response = self.chat.send_message(question)
-        return response.text
+        retry_delay = 2
+        max_retries = 3
+        
+        for attempt in range(max_retries):
+            try:
+                response = self.chat.send_message(question)
+                return response.text
+            except (exceptions.ServiceUnavailable, exceptions.GatewayTimeout, exceptions.DeadlineExceeded) as e:
+                 if attempt < max_retries - 1:
+                    print(f"Chat error ({type(e).__name__}): {e}. Retrying in {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+                    retry_delay *= 2
+                 else:
+                    raise e
+            except Exception as e:
+                raise e
