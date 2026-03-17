@@ -7,11 +7,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is an **Agentic RAG (Retrieval-Augmented Generation)** application that allows users to upload PDF documents and ask natural language questions. The system uses Google's Gemini models to provide intelligent, context-aware answers based on the uploaded document content.
 
 **Key Features Implemented:**
-- **Multi-Document Support**: Upload and query across multiple PDFs
-- **Persistent Vector Store**: ChromaDB for document embeddings (survives restarts)
-- **Session Management**: Server-side sessions with Flask-Session
-- **Citation Support**: Answers include page numbers and source documents
-- **React Frontend**: Modern UI with Vite (optional, falls back to vanilla HTML)
+- **Multi-Document Support**: Upload and query across multiple PDFs.
+- **Persistent Vector Store**: ChromaDB for document embeddings (survives restarts).
+- **Session Management**: Server-side sessions with Flask-Session.
+- **Session Memory**: The agent remembers previous questions in the current session.
+- **Batch Embedding**: Optimized document indexing with batch processing.
+- **Citation Support**: Answers include page numbers and source documents.
+- **React Frontend**: Modern UI with Vite (optional, falls back to vanilla HTML).
 
 ## Common Commands
 
@@ -70,20 +72,18 @@ Create a `.env` file in the root directory with:
 
 ```env
 GEMINI_API_KEY=your_google_gemini_api_key
-GOOGLE_API_KEY=your_google_gemini_api_key  # Alternative name, either works
-GEMINI_MODEL=gemini-2.5-flash              # Optional, defaults to gemini-2.5-flash
-GEMINI_EMBEDDING_MODEL=models/gemini-embedding-001  # Optional
+GOOGLE_API_KEY=your_google_gemini_api_key  # Alternative name, used by LangChain
+GEMINI_MODEL=gemini-1.5-flash                # Recommended
+GEMINI_EMBEDDING_MODEL=models/gemini-embedding-001
 FLASK_SECRET_KEY=your_secret_key_here        # Optional, auto-generated if not set
 ```
-
-The app validates that `GEMINI_API_KEY` is set at startup and exits with an error if missing.
 
 ## Architecture
 
 ### High-Level Flow
 
-1. **PDF Upload** (`POST /upload`): User uploads PDF → text extracted with page metadata → chunked with metadata → embedded → stored in ChromaDB
-2. **Chat** (`POST /chat`): User asks question → Agent retrieves context with citations → Gemini generates answer with source references
+1. **PDF Upload** (`POST /upload`): User uploads PDF → text extracted with page metadata → chunked with metadata → embedded in batches → stored in ChromaDB
+2. **Chat** (`POST /chat`): User asks question → Agent retrieves context with citations → Gemini generates answer using memory and context
 
 ### Module Structure
 
@@ -93,84 +93,23 @@ modules/
 │   ├── pdf_reader.py       # pypdf-based text extraction with page metadata
 │   └── chunker.py          # RecursiveCharacterTextSplitter with metadata preservation
 ├── retrieval/              # Vector search
-│   ├── embedder.py         # Gemini embedding API with retry logic
+│   ├── embedder.py         # Gemini embedding API with batching and retry logic
 │   ├── retriever.py        # ChromaDB wrapper with query/filter support
 │   └── vector_store.py     # Persistent ChromaDB client
 └── agent/                  # LLM agent
-    └── agent.py            # LangChain tool-calling agent with Gemini
-
-frontend/                   # React frontend (Vite)
-├── src/
-│   ├── components/         # React components
-│   ├── App.jsx            # Main app component
-│   └── main.jsx           # Entry point
-└── package.json
+    └── agent.py            # LangChain tool-calling agent with Gemini & Memory
 ```
 
 ### Key Architectural Patterns
 
-**Agentic RAG**: Uses LangChain `create_tool_calling_agent` that decides *when* to call the retrieval tool. The agent can answer directly from its knowledge or retrieve context when needed.
+**Agentic RAG with Memory**: Uses LangChain `create_tool_calling_agent` with redundant memory via `ConversationBufferMemory`. The agent preserves state for follow-up questions within a session.
 
-**Session-Based State**: Each user session has:
-- Unique session ID stored in Flask session cookie
+**Session-Based Isolation**: Each user session has:
 - Isolated ChromaDB collection (`session_{session_id}`)
-- Per-session agent instance cached in memory
-- 24-hour session lifetime
+- Isolated Agent instance with its own memory
+- Server-side stats tracking
 
-**Persistent Vector Store**: ChromaDB stores embeddings on disk in `./chroma_db/`:
-- Collections are named per session
-- Documents can be added/removed individually
-- Embeddings survive server restarts
-- Supports metadata filtering by document_id
-
-**Citation Tracking**: PDF processing preserves:
-- Page numbers for each chunk
-- Document name/source
-- Chunk index within document
-- Retrieved context includes citation info in responses
-
-### API Endpoints
-
-**Document Management:**
-- `GET /api/session` - Get session info and document count
-- `GET /api/documents` - List all documents in session
-- `DELETE /api/documents/<id>` - Delete specific document
-- `POST /api/documents/clear` - Remove all documents
-
-**Upload & Chat:**
-- `POST /upload` - Upload PDF (multipart/form-data)
-- `POST /chat` - Ask question (JSON: `{question, include_sources}`)
-
-**Frontend:**
-- `GET /` - Serves React app (if built) or vanilla HTML template
-
-### Error Handling
-
-- The embedder has built-in retry logic for Google API rate limits (ResourceExhausted, ServiceUnavailable, etc.) with exponential backoff
-- The agent has 3 retry attempts for transient failures
-- Uploaded files are cleaned up after processing regardless of success/failure
-- Session errors return appropriate HTTP status codes with error messages
-
-### Data Flow
-
-```
-User Uploads PDF
-    ↓
-PDF Reader extracts text + page metadata
-    ↓
-Chunker splits text preserving page metadata
-    ↓
-Embedder generates embeddings (with retry)
-    ↓
-ChromaDB stores chunks + metadata in session collection
-    ↓
-Agent created with retriever tool
-    ↓
-User asks question
-    ↓
-Agent decides to retrieve context
-    ↓
-Retriever queries ChromaDB with cosine similarity
-    ↓
-Agent generates answer with citations
-```
+**Efficient Retrieval**:
+- Batch embedding generation for faster uploads.
+- Cosine similarity search in ChromaDB.
+- Metadata-preserved chunking for accurate citations.
