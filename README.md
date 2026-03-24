@@ -1,101 +1,98 @@
-# Agentic RAG Document Q&A App
+# 🚀 Production Agentic RAG System (Gemini 1.5)
 
-## Problem Statement
-In the era of information overload, manually searching through large PDF documents for specific answers is time-consuming and inefficient. Traditional keyword searches often fail to capture the context of user queries, leading to irrelevant results. There is a need for an intelligent system that can understand natural language questions, retrieve relevant context from documents, and generate accurate, concise answers.
+An industry-grade Retrieval-Augmented Generation (RAG) system built with **FastAPI**, **React**, and **Google Gemini 1.5**. This system features an autonomous agentic layer, hybrid retrieval (Dense + Sparse), and automated performance evaluation.
 
-## Project Overview
-This project is an **Agentic Retrieval-Augmented Generation (RAG)** application designed to solve this problem. It leverages **Google's Gemini 1.5 Flash** model as an intelligent agent capable of reasoning and using tools. The application allows users to upload PDF documents, which are then processed and indexed. Users can then ask natural language questions, and the agent dynamically retrieves relevant information from the document to provide precise answers with citations.
+---
 
-The application features a modern **React** frontend and a robust **Flask** backend with persistent vector storage.
+## 🏗️ Technical Architecture
 
-## Project Structure
-The project is organized into modular components for maintainability and scalability:
+The system is designed for high-performance and modularity:
 
+*   **Agentic Orchestration**: Uses `LangChain` with Gemini 1.5 Flash to create an autonomous agent that decides when to retrieve context vs. answer from memory.
+*   **Hybrid Retrieval Layer**:
+    *   **Dense**: `ChromaDB` with `Gemini-1.5-Embeddings`.
+    *   **Sparse**: `BM25` for keyword-based retrieval.
+    *   **Parent-Child Chunking**: Maintains small chunks for retrieval but returns full parent context for generation.
+*   **Reranking Pipeline**: Uses `BGE-Reranker` (Cross-Encoder) to prioritize the most relevant chunks before LLM generation.
+*   **Evaluation Suite**: Built-in **RAGAS** integration to measure Faithfulness, Relevance, and Precision directly from the UI.
+*   **Caching**: `Redis` integration for ultra-fast repeated query responses.
+
+---
+
+## 📂 Project Structure
+
+```text
+.
+├── app/                    # Backend (FastAPI)
+│   ├── api/                # REST endpoints
+│   ├── core/               # App configuration & settings
+│   ├── db/                 # Vector store & Redis logic
+│   ├── ingestion/          # PDF/CSV/TXT/MD loaders
+│   ├── models/             # Pydantic schemas
+│   ├── retrieval/          # Hybrid search & Reranking
+│   └── services/           # Business logic (Chat, Docs, Eval)
+├── frontend/               # Frontend (React + Vite + Framer Motion)
+│   ├── src/components/     # UI Components (Glassmorphism)
+│   └── src/App.jsx         # Main Layout
+├── data/                   # Persistent storage (Gitignored)
+├── Dockerfile              # Multi-stage production build
+└── pyproject.toml          # UV dependency management
 ```
-RAG/
-├── app.py                  # Main Flask application entry point
-├── modules/                # Core logic modules
-│   ├── agent/              # Gemini Agent with tool-use and memory
-│   ├── ingestion/          # PDF processing and text chunking
-│   └── retrieval/          # Embedding (Gemini) and vector search (ChromaDB)
-├── frontend/               # React (Vite) frontend
-├── templates/              # Fallback HTML interface
-├── uploads/                # Directory for temporary PDF storage
-├── chroma_db/              # Persistent vector database
-├── pyproject.toml          # Project dependencies (UV)
-└── .env                    # Environment variables (API Keys)
+
+---
+
+## 🚀 Quick Start
+
+### 1. Prerequisites
+*   Python 3.12+
+*   Node.js 20+
+*   Gemini API Key (Google AI Studio)
+
+### 2. Environment Setup
+Create a `.env` file in the root:
+```env
+GEMINI_API_KEY=your_key
+REDIS_URL=redis://localhost:6379/0  # Optional, fallbacks to in-memory
 ```
 
-## Steps to Execute the Project
+### 3. Local Development
 
-### Prerequisites
-- Python 3.11 or higher
-- Node.js & npm (for React frontend)
-- A Google Gemini API Key.
+**Backend:**
+```bash
+uv sync
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
 
-### Installation
+**Frontend:**
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-1.  **Clone the Repository**
-    ```bash
-    git clone <repository_url>
-    cd RAG_Document
-    ```
+### 4. Docker Deployment
+```bash
+docker build -t rag-prod .
+docker run -p 8000:8000 -e GEMINI_API_KEY=your_key rag-prod
+```
 
-2.  **Set Up Python Environment**
-    ```bash
-    uv sync
-    # or
-    python -m venv .venv
-    source .venv/bin/activate  # .venv\Scripts\activate on Windows
-    pip install -e .
-    ```
+---
 
-3.  **Set Up Environment Variables**
-    Create a `.env` file in the root directory:
-    ```env
-    GEMINI_API_KEY=your_api_key_here
-    GOOGLE_API_KEY=your_api_key_here
-    ```
+## ✨ Key Features
 
-### Running the Application
+*   **Premium Glassmorphic UI**: High-end React interface with Framer Motion animations.
+*   **Multi-Format Support**: Process PDF, CSV, TXT, and Markdown files.
+*   **Autonomous Grounding**: LLM cites specific Source IDs to prevent hallucinations.
+*   **Session Management**: Persistent local sessions with dedicated vector collections.
+*   **Performance Analytics**: One-click RAGAS evaluation with visual metrics and celebration effects.
+*   **Robust Caching**: Graceful Redis fallbacks for development environments.
 
-1.  Start the Flask server:
-    ```bash
-    python app.py
-    ```
+---
 
-2.  (Optional) Start the React Dev server:
-    ```bash
-    cd frontend
-    npm install
-    npm run dev
-    ```
-
-3.  Open `http://127.0.0.1:5000` (or `:3000` if using React dev server).
-
-## Architecture for Agentic RAG
-
-The system follows an **Agentic RAG** architecture:
-
-1.  **Ingestion Layer**:
-    - **PDF Reader**: Extracts text and page metadata using `pypdf`.
-    - **Chunking**: Splits text into chunks while preserving metadata for citations.
-    - **Embedding**: Generates vectors using Google's `text-embedding-004` (via batch API).
-
-2.  **Storage Layer**:
-    - **Vector Store**: Uses **ChromaDB** for persistent, local storage of embeddings.
-
-3.  **Agentic Layer**:
-    - **Gemini Agent**: Configured with `langchain` tools and `ConversationBufferMemory`.
-    - **Autonomy**: The agent decides when to call the `retrieve_context` tool vs answering from memory.
-
-4.  **Application Layer**:
-    - **Flask Backend**: Manages sessions, document uploads, and agent lifecycle.
-    - **React Frontend**: Provides a premium, responsive glassmorphism UI.
-
-## Key Features
-- **Persistent Memory**: Remembers chat history for follow-up questions.
-- **Accurate Citations**: References specific page numbers and source documents.
-- **Batch Processing**: Fast document indexing.
-- **Session Isolation**: Each user gets their own dedicated agent and collection.
-- **React UI**: Modern look with shadcn/ui inspired components.
+## 🛠️ Built With
+*   [FastAPI](https://fastapi.tiangolo.com/) - Backend Framework
+*   [LangChain](https://www.langchain.com/) - LLM Orchestration
+*   [ChromaDB](https://www.trychroma.com/) - Vector Database
+*   [React](https://react.dev/) - Frontend Library
+*   [Framer Motion](https://www.framer.com/motion/) - UI Animations
+*   [RAGAS](https://ragas.io/) - Performance Evaluation

@@ -1,32 +1,42 @@
+# Stage 1: Build Frontend
+FROM node:20-slim AS frontend-builder
+WORKDIR /frontend
+COPY frontend/package*.json ./
+RUN npm install
+COPY frontend/ ./
+RUN npm run build
+
+# Stage 2: Final Image (Python runtime)
 FROM python:3.12-slim-bookworm
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Set working directory
 WORKDIR /app
 
-# Enable bytecode compilation
+# UV settings: Bytecode compilation + copy mode
 ENV UV_COMPILE_BYTECODE=1
-
-# Copy from the cache instead of linking since it's a mounted volume
 ENV UV_LINK_MODE=copy
 
-# Install the project's dependencies using the lockfile and settings
+# Copy lock and toml to install dependencies
+COPY uv.lock pyproject.toml ./
 RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=uv.lock,target=uv.lock \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --frozen --no-install-project --no-dev
 
-# Then, add the rest of the project source code and install it
-# Installing separately from its dependencies allows optimal layer caching
-ADD . /app
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev
+# Copy project files
+COPY app ./app
+COPY app.py ./
 
-# Place executables in the environment at the front of the path
+# Create necessary dirs
+RUN mkdir -p data/uploads data/chroma_db
+
+# Copy built frontend from Stage 1
+COPY --from=frontend-builder /frontend/dist ./frontend/dist
+
+# Expose Port
+ENV PORT=8000
+EXPOSE 8000
+
+# Path to .venv
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Define environment variable
-ENV PORT=5000
-
-# Run the application
-CMD gunicorn --bind 0.0.0.0:$PORT app:app
+# Run FastAPI via Uvicorn
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
