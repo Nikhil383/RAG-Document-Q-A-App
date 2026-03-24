@@ -3,203 +3,459 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agentic RAG with Gemini</title>
+    <title>Production Agentic RAG (Flask)</title>
+    <!-- Premium Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Markdown Parser -->
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it@14.0.0/dist/markdown-it.min.js"></script>
+    <!-- Confetti for Celebration -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        :root {
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --bg-dark: #0f172a;
+            --bg-glass: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --success: #22c55e;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            background-color: #f4f4f9;
-            color: #333;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at top right, #1e1b4b, var(--bg-dark), #020617);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism Styles */
+        .glass-card {
+            background: var(--bg-glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #818cf8);
+            border: none;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 20px var(--primary-glow);
+        }
+
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 25px var(--primary-glow); }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+            padding: 0.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-ghost:hover { background: rgba(255, 255, 255, 0.05); color: white; }
+
+        /* Layout */
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem;
             display: flex;
             flex-direction: column;
+            gap: 1.5rem;
             height: 100vh;
         }
-        header {
-            background-color: #4a90e2;
-            color: white;
-            padding: 1rem;
-            text-align: center;
-        }
-        main {
-            flex: 1;
+
+        .app-header {
             display: flex;
-            flex-direction: column;
-            max_width: 800px;
-            margin: 0 auto;
-            padding: 2rem;
-            width: 100%;
-            box-sizing: border-box;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
         }
-        .upload-section {
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 2rem;
-            text-align: center;
-        }
-        .chat-section {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+        .header-logo h1 { font-size: 1.5rem; font-weight: 700; background: linear-gradient(to right, #818cf8, #f472b6); -webkit-background-clip: text; -webkit-text-fillColor: transparent; }
+        .header-logo p { font-size: 0.8rem; color: var(--text-secondary); }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 1.5rem;
+            flex-grow: 1;
             overflow: hidden;
         }
-        #chat-history {
-            flex: 1;
-            padding: 1rem;
-            overflow-y: auto;
-            border-bottom: 1px solid #eee;
-        }
-        .message {
-            margin-bottom: 1rem;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            max-width: 70%;
-        }
-        .user-message {
-            background-color: #e3f2fd;
-            align-self: flex-end;
-            margin-left: auto;
-        }
-        .bot-message {
-            background-color: #f1f0f0;
-            align-self: flex-start;
-            margin-right: auto;
-        }
-        .input-area {
-            padding: 1rem;
+
+        /* Sidebar & Upload */
+        .sidebar {
             display: flex;
-            gap: 1rem;
+            flex-direction: column;
+            gap: 1.5rem;
+            overflow-y: auto;
+            padding-right: 0.5rem;
         }
-        input[type="text"] {
-            flex: 1;
-            padding: 0.5rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        button {
-            padding: 0.5rem 1rem;
-            background-color: #4a90e2;
-            color: white;
-            border: none;
-            border-radius: 4px;
+
+        .upload-area {
+            padding: 2rem;
+            text-align: center;
+            border: 2px dashed var(--glass-border);
             cursor: pointer;
+            transition: 0.3s;
         }
-        button:disabled {
-            background-color: #ccc;
+
+        .upload-area:hover { border-color: var(--primary); background: rgba(99, 102, 241, 0.05); }
+
+        /* Document List */
+        .document-list { list-style: none; margin-top: 1rem; }
+        .document-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--glass-border);
         }
+
+        /* Chat System */
+        .chat-view {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .message-bubble {
+            padding: 1rem 1.25rem;
+            border-radius: 18px;
+            max-width: 85%;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        .message-user {
+            align-self: flex-end;
+            background: var(--primary);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message-assistant {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-bottom-left-radius: 5px;
+        }
+
+        /* Metrics */
+        .metrics-card { padding: 1.25rem; }
+        .metric-bar-container { height: 6px; background: rgba(255,255,255,0.05); border-radius: 10px; margin-top: 5px; overflow: hidden; }
+        .metric-fill { height: 100%; transition: 1s ease-out; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+        #uploadInput { display: none; }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Agentic RAG with Gemini</h1>
-    </header>
-    <main>
-        <div class="upload-section">
-            <h2>Upload PDF</h2>
-            <form id="upload-form">
-                <input type="file" id="file-input" accept=".pdf" required>
-                <button type="submit">Upload</button>
-            </form>
-            <div id="upload-status"></div>
-        </div>
-
-        <div class="chat-section">
-            <div id="chat-history"></div>
-            <div class="input-area">
-                <input type="text" id="question-input" placeholder="Ask a question..." disabled>
-                <button id="send-btn" disabled>Send</button>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-logo">
+                <h1>LangChain Graph RAG</h1>
+                <p>Knowledge Graph Extraction & Query (Flask)</p>
             </div>
-        </div>
-    </main>
+            <div id="sessionBadge" class="glass-card" style="padding: 0.4rem 1rem; font-size: 0.8rem; color: var(--text-secondary); border-radius: 30px;">
+                Session: <span id="sessionIdLabel" style="color: var(--primary); font-weight: 600;">...</span>
+            </div>
+        </header>
+
+        <main class="main-layout">
+            <aside class="sidebar">
+                <!-- Upload Panel -->
+                <div class="glass-card" style="padding: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h2 style="font-size: 1rem;">Graph Store</h2>
+                        <i data-lucide="network" size="18"></i>
+                    </div>
+                    
+                    <div class="upload-area glass-card" onclick="document.getElementById('uploadInput').click()">
+                        <i data-lucide="upload-cloud" size="32" style="color: var(--primary); margin-bottom: 0.5rem;"></i>
+                        <p style="font-size: 0.85rem;">Drop or click to upload</p>
+                        <p style="font-size: 0.7rem; color: var(--text-secondary);">PDF, TXT, CSV, MD</p>
+                        <input type="file" id="uploadInput" accept=".pdf,.txt,.md,.csv">
+                    </div>
+
+                    <div id="docListContainer" class="document-list">
+                        <!-- Docs here -->
+                    </div>
+                </div>
+
+                <!-- Benchmarking Panel -->
+                <div class="glass-card metrics-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2 style="font-size: 1rem;">Graph Stats</h2>
+                        <i data-lucide="activity" size="18"></i>
+                    </div>
+                    
+                    <div id="metricsContent" style="display: block;">
+                        <div class="metric-row" style="margin-bottom: 1rem;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px;">
+                                <span>Total Nodes Extracted</span> <span id="val-nodes" style="color: #22c55e;">0</span>
+                            </div>
+                        </div>
+                        <div class="metric-row" style="margin-bottom: 1rem;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px;">
+                                <span>Relationships (Edges)</span> <span id="val-edges" style="color: #eab308;">0</span>
+                            </div>
+                        </div>
+                        <div id="scoreBanner" style="margin-top: 1rem; padding: 1rem; border-radius: 15px; background: rgba(99,102,241,0.1); text-align: center;">
+                            <p style="font-size: 0.7rem; color: var(--text-secondary);">Graph Database</p>
+                            <h3 id="overallScore" style="font-size: 1.2rem; color: #818cf8;">NetworkX Entity Graph</h3>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="glass-card chat-view">
+                <div id="chatMessages" class="chat-messages">
+                    <!-- Messages will appear here -->
+                    <div style="margin: auto; text-align: center; opacity: 0.5;">
+                        <i data-lucide="bot" size="48" style="margin-bottom: 1rem;"></i>
+                        <p>Upload a document to start the agentic reasoning loop.</p>
+                    </div>
+                </div>
+                
+                <div style="padding: 1.5rem; border-top: 1px solid var(--glass-border);">
+                    <form id="chatForm" style="display: flex; gap: 1rem;">
+                        <input type="text" id="chatInput" autocomplete="off" placeholder="Analyze the loaded context..." style="flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 12px; padding: 0.8rem 1.25rem; color: white; outline: none;">
+                        <button type="submit" id="sendBtn" class="btn-primary">
+                            <i data-lucide="send" size="18"></i>
+                        </button>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
 
     <script>
-        const uploadForm = document.getElementById('upload-form');
-        const fileInput = document.getElementById('file-input');
-        const uploadStatus = document.getElementById('upload-status');
-        const chatHistory = document.getElementById('chat-history');
-        const questionInput = document.getElementById('question-input');
-        const sendBtn = document.getElementById('send-btn');
+        const md = window.markdownit();
+        const state = {
+            sessionId: '...',
+            documents: [],
+            loading: false
+        };
 
-        uploadForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const file = fileInput.files[0];
+        // --- Selectors ---
+        const chatMessages = document.getElementById('chatMessages');
+        const chatForm = document.getElementById('chatForm');
+        const chatInput = document.getElementById('chatInput');
+        const docListContainer = document.getElementById('docListContainer');
+        const uploadInput = document.getElementById('uploadInput');
+        const evalBtn = document.getElementById('evalBtn');
+
+        // --- Logic ---
+        async function init() {
+            lucide.createIcons();
+            await fetchSession();
+            await fetchDocs();
+        }
+
+        async function fetchSession() {
+            const res = await fetch('/api/session');
+            const data = await res.json();
+            state.sessionId = data.session_id;
+            document.getElementById('sessionIdLabel').innerText = data.session_id;
+            document.getElementById('val-nodes').innerText = data.stats.nodes || 0;
+            document.getElementById('val-edges').innerText = data.stats.edges || 0;
+        }
+
+        async function fetchDocs() {
+            const res = await fetch('/api/documents');
+            const data = await res.json();
+            state.documents = data.documents;
+            renderDocs();
+        }
+
+        function renderDocs() {
+            docListContainer.innerHTML = '';
+            state.documents.forEach(doc => {
+                const item = document.createElement('div');
+                item.className = 'document-item';
+                item.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:0.5rem; overflow:hidden;">
+                        <i data-lucide="file-text" size="14" style="color:var(--primary);"></i>
+                        <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:0.8rem;">${doc.name}</div>
+                    </div>
+                    <button class="btn-ghost" style="padding:2px;" onclick="deleteDoc(\'${doc.id}\')">
+                        <i data-lucide="trash-2" size="14"></i>
+                    </button>
+                `;
+                docListContainer.appendChild(item);
+            });
+            lucide.createIcons();
+            chatInput.disabled = state.documents.length === 0;
+            chatInput.placeholder = state.documents.length === 0 ? "Load context first..." : "Ask the agent...";
+        }
+
+        async function deleteDoc(id) {
+            await fetch(`/api/documents/${id}`, { method: 'DELETE' });
+            await fetchDocs();
+        }
+
+        uploadInput.onchange = async (e) => {
+            const file = e.target.files[0];
             if (!file) return;
 
             const formData = new FormData();
             formData.append('file', file);
 
-            uploadStatus.textContent = 'Uploading and processing...';
+            // Show temporary loading msg
+            addMessage('system', `Extracting Entities & Building Graph from ${file.name}... This takes longer than vector indexing.`);
             
             try {
-                const response = await fetch('/upload', {
+                const res = await fetch('/api/upload', {
                     method: 'POST',
                     body: formData
                 });
-                const data = await response.json();
-                
-                if (response.ok) {
-                    uploadStatus.textContent = data.message;
-                    questionInput.disabled = false;
-                    sendBtn.disabled = false;
-                } else {
-                    uploadStatus.textContent = `Error: ${data.error}`;
-                }
-            } catch (error) {
-                uploadStatus.textContent = `Error: ${error.message}`;
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                addMessage('system', `Success: ${data.nodes_extracted} nodes and ${data.edges_extracted} edges extracted from ${file.name}.`);
+                await fetchDocs();
+                await fetchSession(); // Update graph stats
+            } catch (err) {
+                addMessage('system', `Error: ${err.message}`, true);
             }
-        });
+        };
 
-        async function sendMessage() {
-            const question = questionInput.value.trim();
-            if (!question) return;
+        chatForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const question = chatInput.value.trim();
+            if (!question || state.loading) return;
 
-            // Add user message to chat
-            appendMessage('You', question, 'user-message');
-            questionInput.value = '';
-            questionInput.disabled = true;
-            sendBtn.disabled = true;
+            chatInput.value = '';
+            addMessage('user', question);
+            state.loading = true;
 
+            // Loading state
+            const loaderId = addMessage('assistant', '<div class="typing-indicator"><span></span><span></span><span></span></div>');
+            
             try {
-                const response = await fetch('/chat', {
+                const res = await fetch('/api/chat', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ question })
                 });
-                const data = await response.json();
-
-                if (response.ok) {
-                    appendMessage('Agent', data.answer, 'bot-message');
-                } else {
-                    appendMessage('System', `Error: ${data.error}`, 'bot-message');
-                }
-            } catch (error) {
-                appendMessage('System', `Error: ${error.message}`, 'bot-message');
+                const data = await res.json();
+                
+                removeMessage(loaderId);
+                addMessage('assistant', data.answer, false); // Graph RAG rarely returns raw sources like dense vectors
+            } catch (err) {
+                removeMessage(loaderId);
+                addMessage('system', 'Graph Engine timed out or failed. Please retry.', true);
             } finally {
-                questionInput.disabled = false;
-                sendBtn.disabled = false;
-                questionInput.focus();
+                state.loading = false;
             }
+        };
+
+        function addMessage(role, content, isError = false, sources = []) {
+            if (chatMessages.children.length > 0 && chatMessages.children[0].style.opacity === "0.5") {
+                chatMessages.innerHTML = '';
+            }
+
+            const msgId = 'msg_' + Math.random().toString(36).substring(2, 9);
+            const div = document.createElement('div');
+            div.id = msgId;
+            div.style.display = 'flex';
+            div.style.flexDirection = role === 'user' ? 'row-reverse' : 'row';
+            div.style.gap = '1rem';
+            div.style.alignSelf = role === 'user' ? 'flex-end' : 'flex-start';
+            div.style.maxWidth = '85%';
+
+            const bubbleClass = role === 'user' ? 'message-user' : 'message-assistant';
+            const formattedContent = role === 'assistant' ? md.render(content) : content;
+
+            let sourceHtml = '';
+            if (sources && sources.length > 0) {
+                sourceHtml = `
+                    <div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-secondary);">
+                        <details>
+                            <summary style="cursor:pointer; opacity:0.8;">Grounding Evidence (${sources.length})</summary>
+                            <div style="margin-top:0.5rem; display:flex; flex-direction:column; gap:0.5rem;">
+                                ${sources.map(s => `
+                                    <div style="padding:0.6rem; background:rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:8px;">
+                                        <div style="color:var(--primary); font-weight:600; margin-bottom:2px;">${s.metadata?.document_name || 'Source'}</div>
+                                        <div style="opacity:0.8; font-style:italic;">"${s.text.substring(0, 150)}..."</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </details>
+                    </div>
+                `;
+            }
+
+            div.innerHTML = `
+                <div style="width:32px; height:32px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:${role==='user'?'var(--primary)':'rgba(255,255,255,0.1)'};">
+                    <i data-lucide="${role==='user'?'user':'bot'}" size="16"></i>
+                </div>
+                <div style="display:flex; flex-direction:column;">
+                    <div class="message-bubble ${bubbleClass}" style="${isError?'border-color:var(--error);background:rgba(239,68,68,0.1);':''}">
+                        ${formattedContent}
+                    </div>
+                    ${sourceHtml}
+                </div>
+            `;
+
+            chatMessages.appendChild(div);
+            lucide.createIcons();
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            return msgId;
         }
 
-        sendBtn.addEventListener('click', sendMessage);
-        questionInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
-        });
-
-        function appendMessage(sender, text, className) {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = `message ${className}`;
-            msgDiv.innerHTML = `<strong>${sender}:</strong> ${text}`;
-            chatHistory.appendChild(msgDiv);
-            chatHistory.scrollTop = chatHistory.scrollHeight;
+        function removeMessage(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
         }
+
+        init();
     </script>
 </body>
 </html>
