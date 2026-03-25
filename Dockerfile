@@ -2,41 +2,33 @@
 FROM node:20-slim AS frontend-builder
 WORKDIR /frontend
 COPY frontend/package*.json ./
-RUN npm install
+RUN npm ci
 COPY frontend/ ./
 RUN npm run build
 
-# Stage 2: Final Image (Python runtime)
+# Stage 2: Python runtime
 FROM python:3.12-slim-bookworm
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
-# UV settings: Bytecode compilation + copy mode
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 
-# Copy lock and toml to install dependencies
 COPY uv.lock pyproject.toml ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --no-dev
 
-# Copy project files
-COPY app ./app
-COPY app.py ./
+# Copy backend sources
+COPY app.py ingest.py graph_agent.py ./
+COPY templates ./templates
 
-# Create necessary dirs
-RUN mkdir -p data/uploads data/chroma_db
-
-# Copy built frontend from Stage 1
+# Optional: ship built frontend assets for future backend static hosting
 COPY --from=frontend-builder /frontend/dist ./frontend/dist
 
-# Expose Port
-ENV PORT=8000
-EXPOSE 8000
-
-# Path to .venv
 ENV PATH="/app/.venv/bin:$PATH"
+ENV FLASK_ENV=production
+ENV PORT=5000
+EXPOSE 5000
 
-# Run FastAPI via Uvicorn
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
