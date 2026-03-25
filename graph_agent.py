@@ -63,15 +63,15 @@ def retrieve_graph_context(state: AgentState):
     
     context_str = ""
     for entity in state["entities"]:
-        # Safe parameterized hybrid query for relationships 
-        cypher = f"""
-        MATCH (n)-[r]-(m) 
-        WHERE toLower(n.id) CONTAINS toLower('{entity}')
+        # Parameterized Cypher query to avoid string interpolation from user-derived text
+        cypher = """
+        MATCH (n)-[r]-(m)
+        WHERE toLower(n.id) CONTAINS toLower($entity)
         RETURN n.id AS source, type(r) AS relationship, m.id AS target
         LIMIT 10
         """
         try:
-            results = graph.query(cypher)
+            results = graph.query(cypher, params={"entity": str(entity)[:120]})
             for row in results:
                 context_str += f"{row['source']} -[{row['relationship']}]-> {row['target']}\n"
         except Exception as e:

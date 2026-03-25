@@ -1,98 +1,75 @@
-# 🚀 Production Agentic RAG System (Gemini 1.5)
+# Graph RAG Document Q&A App
 
-An industry-grade Retrieval-Augmented Generation (RAG) system built with **FastAPI**, **React**, and **Google Gemini 1.5**. This system features an autonomous agentic layer, hybrid retrieval (Dense + Sparse), and automated performance evaluation.
+A Graph-based Retrieval-Augmented Generation (RAG) application using:
+- **Flask** backend API
+- **React + Vite** frontend
+- **Gemini 2.0 Flash** for extraction and answering
+- **Neo4j** as the knowledge graph store
 
----
-
-## 🏗️ Technical Architecture
-
-The system is designed for high-performance and modularity:
-
-*   **Agentic Orchestration**: Uses `LangChain` with Gemini 1.5 Flash to create an autonomous agent that decides when to retrieve context vs. answer from memory.
-*   **Hybrid Retrieval Layer**:
-    *   **Dense**: `ChromaDB` with `Gemini-1.5-Embeddings`.
-    *   **Sparse**: `BM25` for keyword-based retrieval.
-    *   **Parent-Child Chunking**: Maintains small chunks for retrieval but returns full parent context for generation.
-*   **Reranking Pipeline**: Uses `BGE-Reranker` (Cross-Encoder) to prioritize the most relevant chunks before LLM generation.
-*   **Evaluation Suite**: Built-in **RAGAS** integration to measure Faithfulness, Relevance, and Precision directly from the UI.
-*   **Caching**: `Redis` integration for ultra-fast repeated query responses.
-
----
-
-## 📂 Project Structure
+## Current Architecture
 
 ```text
 .
-├── app/                    # Backend (FastAPI)
-│   ├── api/                # REST endpoints
-│   ├── core/               # App configuration & settings
-│   ├── db/                 # Vector store & Redis logic
-│   ├── ingestion/          # PDF/CSV/TXT/MD loaders
-│   ├── models/             # Pydantic schemas
-│   ├── retrieval/          # Hybrid search & Reranking
-│   └── services/           # Business logic (Chat, Docs, Eval)
-├── frontend/               # Frontend (React + Vite + Framer Motion)
-│   ├── src/components/     # UI Components (Glassmorphism)
-│   └── src/App.jsx         # Main Layout
-├── data/                   # Persistent storage (Gitignored)
-├── Dockerfile              # Multi-stage production build
-└── pyproject.toml          # UV dependency management
+├── app.py                # Flask API server (`/api/upload`, `/api/chat`)
+├── ingest.py             # Document parsing + graph ingestion into Neo4j
+├── graph_agent.py        # LangGraph workflow for entity extraction + answer generation
+├── frontend/             # React app (Vite)
+├── templates/            # Static/template assets
+├── Dockerfile            # Multi-stage build for frontend + backend runtime
+└── pyproject.toml        # Python dependencies
 ```
 
----
+## Prerequisites
+- Python 3.11+
+- Node.js 20+
+- Running Neo4j instance (default `bolt://localhost:7687`)
+- Gemini API key
 
-## 🚀 Quick Start
+## Environment
+Create `.env` in repository root:
 
-### 1. Prerequisites
-*   Python 3.12+
-*   Node.js 20+
-*   Gemini API Key (Google AI Studio)
-
-### 2. Environment Setup
-Create a `.env` file in the root:
 ```env
 GEMINI_API_KEY=your_key
-REDIS_URL=redis://localhost:6379/0  # Optional, fallbacks to in-memory
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USERNAME=neo4j
+NEO4J_PASSWORD=password
 ```
 
-### 3. Local Development
+## Local Development
 
-**Backend:**
+### Backend
 ```bash
 uv sync
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+uv run python app.py
 ```
+Backend runs on `http://127.0.0.1:5000`.
 
-**Frontend:**
+### Frontend
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
+Frontend runs on `http://127.0.0.1:3000` and proxies `/api` to Flask.
 
-### 4. Docker Deployment
+## Docker
 ```bash
-docker build -t rag-prod .
-docker run -p 8000:8000 -e GEMINI_API_KEY=your_key rag-prod
+docker build -t graph-rag-app .
+docker run --rm -p 5000:5000 --env-file .env graph-rag-app
 ```
 
----
+## API Endpoints
 
-## ✨ Key Features
+### `POST /api/upload`
+Upload one `.txt`, `.md`, `.csv`, or `.pdf` document and ingest it into Neo4j.
 
-*   **Premium Glassmorphic UI**: High-end React interface with Framer Motion animations.
-*   **Multi-Format Support**: Process PDF, CSV, TXT, and Markdown files.
-*   **Autonomous Grounding**: LLM cites specific Source IDs to prevent hallucinations.
-*   **Session Management**: Persistent local sessions with dedicated vector collections.
-*   **Performance Analytics**: One-click RAGAS evaluation with visual metrics and celebration effects.
-*   **Robust Caching**: Graceful Redis fallbacks for development environments.
+### `POST /api/chat`
+Request body:
+```json
+{ "query": "Your question" }
+```
+Returns answer, extracted entities, and context used.
 
----
-
-## 🛠️ Built With
-*   [FastAPI](https://fastapi.tiangolo.com/) - Backend Framework
-*   [LangChain](https://www.langchain.com/) - LLM Orchestration
-*   [ChromaDB](https://www.trychroma.com/) - Vector Database
-*   [React](https://react.dev/) - Frontend Library
-*   [Framer Motion](https://www.framer.com/motion/) - UI Animations
-*   [RAGAS](https://ragas.io/) - Performance Evaluation
+## Notes
+- Ingestion depends on external Gemini + Neo4j availability.
+- PDF support requires `pypdf` (included in project dependencies).
