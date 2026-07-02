@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Multimodal RAG</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Py8YDdKOGw1xVE5dH84qIHIQ5rTpiXZlFlgmf/6g6qX45388gMluV5hcC1jMk4XG" crossorigin="anonymous">
+  </head>
+  <body>
+    <div class="container py-5">
+      <h1 class="mb-4">Multimodal RAG</h1>
+
+      <div class="mb-4">
+        <strong>Total indexed items:</strong> {{ total_indexed }}
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <div class="row">
+        <div class="col-md-6 mb-4">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h2 class="h5">Upload document</h2>
+              <form method="post" enctype="multipart/form-data">
+                <div class="mb-3">
+                  <input class="form-control" type="file" name="file" />
+                </div>
+                <button type="submit" class="btn btn-primary">Upload & Index</button>
+              </form>
+              <p class="form-text mt-2">Supported: PDF, TXT, PNG, JPG, JPEG, WEBP, BMP, GIF.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h2 class="h5">Ask a question</h2>
+              <form method="post">
+                <div class="mb-3">
+                  <textarea class="form-control" name="query" rows="5" placeholder="Enter your question"></textarea>
+                </div>
+                <button type="submit" class="btn btn-success">Query</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% if answer %}
+      <div class="card shadow-sm mt-4">
+        <div class="card-body">
+          <h2 class="h5">Answer</h2>
+          <p>{{ answer }}</p>
+          {% if sources %}
+          <h3 class="h6 mt-3">Sources</h3>
+          <pre>{{ sources | tojson(indent=2) }}</pre>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-HoA/e7TBQwFz+ZDdYsWPmTnZN8kZyI9/F66QeH/VlOWZGP1sLrtZR2qOMR4Y5dHW" crossorigin="anonymous"></script>
+  </body>
+</html>
